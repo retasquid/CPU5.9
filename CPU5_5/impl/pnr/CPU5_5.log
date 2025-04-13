@@ -1,0 +1,31 @@
+Reading netlist file: "C:\Users\redsq\Documents\logisim\Tang nano 9k\CPU5_5\impl\gwsynthesis\CPU5_5.vg"
+Parsing netlist file "C:\Users\redsq\Documents\logisim\Tang nano 9k\CPU5_5\impl\gwsynthesis\CPU5_5.vg" completed
+Processing netlist completed
+Reading constraint file: "C:\Users\redsq\Documents\logisim\Tang nano 9k\CPU5_5\src\CPU5_5.cst"
+Physical Constraint parsed completed
+Running placement......
+[10%] Placement Phase 0 completed
+[20%] Placement Phase 1 completed
+[30%] Placement Phase 2 completed
+WARN  (TA1132) :  'n13_6' was determined to be a clock but was not created.
+WARN  (TA1132) :  'clk_d' was determined to be a clock but was not created.
+[50%] Placement Phase 3 completed
+Running routing......
+[60%] Routing Phase 0 completed
+[70%] Routing Phase 1 completed
+[80%] Routing Phase 2 completed
+[90%] Routing Phase 3 completed
+Running timing analysis......
+[95%] Timing analysis completed
+Placement and routing completed
+Bitstream generation in progress......
+Bitstream generation completed
+Running power analysis......
+[100%] Power analysis completed
+Generate file "C:\Users\redsq\Documents\logisim\Tang nano 9k\CPU5_5\impl\pnr\CPU5_5.power.html" completed
+Generate file "C:\Users\redsq\Documents\logisim\Tang nano 9k\CPU5_5\impl\pnr\CPU5_5.pin.html" completed
+Generate file "C:\Users\redsq\Documents\logisim\Tang nano 9k\CPU5_5\impl\pnr\CPU5_5.rpt.html" completed
+Generate file "C:\Users\redsq\Documents\logisim\Tang nano 9k\CPU5_5\impl\pnr\CPU5_5.rpt.txt" completed
+Generate file "C:\Users\redsq\Documents\logisim\Tang nano 9k\CPU5_5\impl\pnr\CPU5_5.tr.html" completed
+Sun Apr 13 12:32:12 2025
+

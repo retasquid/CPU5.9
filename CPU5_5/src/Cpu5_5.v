@@ -1,0 +1,128 @@
+module CPU5_5(
+    output wire[15:0] Dout,
+    output wire[15:0] Addr,
+    output wire write,
+    output wire[15:0] ROMaddr,
+    input wire[28:0] ROMdata,
+    input wire[15:0] Din,
+    input wire[7:0] Interrupts,
+    input wire clk_bus,
+    input wire rst_bus
+);
+    wire ENflags, SBalu, Wreg, INTjmp, jmp, PCpp, Ret, Call, outOR, CallINT,IntSTOP;
+    wire[1:0] Sregin;
+    wire[2:0] OPalu;
+    wire[3:0] FLAGS, R1;
+    wire[15:0] A, B, S, Imm, MUXALU, MUXREG, DiST, Aint, AoST;
+    
+    assign Imm = ROMdata[15:0];
+    assign R1 = ROMdata[19:16];
+
+    ALU alu_inst(
+        .S(S),
+        .FLAGS(FLAGS),
+        .A(A),
+        .B(MUXALU),
+        .OPALU(OPalu),
+        .enFLAGS(ENflags),
+        .clk(clk_bus),
+        .rst(rst_bus)
+    );
+
+    PC pc_inst(
+        .ADDRout(ROMaddr),
+        .INTjmp(INTjmp),
+        .jmp(jmp),
+        .PCpp(PCpp),
+        .Ret(Ret),
+        .CLK(clk_bus),
+        .RST(rst_bus),
+        .Imm(Imm),
+        .Aint(Aint),
+        .DoST(Din)
+    );
+
+    REGFILE regfile_inst(
+        .A(A),
+        .B(B),
+        .Rd(MUXREG),
+        .RdSEL(ROMdata[23:20]),
+        .Asel(R1),
+        .Bsel(ROMdata[15:12]),
+        .WRT(Wreg),
+        .clk(clk_bus),
+        .rst(rst_bus)
+    );
+
+    UC uc_inst(
+        .PCpp(PCpp), 
+        .JMP(jmp),
+        .call(Call),
+        .ret(Ret),
+        .Wreg(Wreg),
+        .Sregin(Sregin),
+        .SBalu(SBalu),
+        .ENflag(ENflags),
+        .OPalu(OPalu),
+        .Wbus(write),
+        .OPCode(ROMdata[28:24]),
+        .A(R1[1:0]),
+        .FLAG(FLAGS),
+        .CLK(clk_bus),
+        .interrupt(IntSTOP),
+        .CallInt(CallINT)
+    );
+
+    stack stack_inst(
+        .Dout(DiST),
+        .ADDRout(AoST),
+        .ADDRin(ROMaddr),
+        .CallINT(CallINT),
+        .Call(Call),
+        .Ret(Ret),
+        .CLK(clk_bus),
+        .RST(rst_bus)
+    );
+
+    INTERRUPT interrupt_inst(
+        .Addr(Aint),
+        .Call(CallINT),
+        .INTjmp(INTjmp),
+        .intSTOP(IntSTOP),
+        .interrupts(Interrupts),
+        .CLK(clk_bus),
+        .RST(rst_bus)
+    );
+
+    MUX4 mux4_inst(
+        .OUT(MUXREG),
+        .IN0(S),
+        .IN1(Imm),
+        .IN2(Din),
+        .IN3(16'b0),
+        .SEL(Sregin)
+    );
+
+    MUXdeux mux2_alu_inst(
+        .OUT(MUXALU),
+        .IN0(B),
+        .IN1(Imm),
+        .SEL(SBalu)
+    );
+
+     MUXdeux mux2_dout_inst(
+        .OUT(Dout),
+        .IN0(A),
+        .IN1(DiST),
+        .SEL(Ret|Call)
+    );
+
+    MUXdeux mux2_addr_inst(
+        .OUT(Addr),
+        .IN0(MUXALU),
+        .IN1(AoST),
+        .SEL(Ret|Call)
+    );
+
+
+endmodule

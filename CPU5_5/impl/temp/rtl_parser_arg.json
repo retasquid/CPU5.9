@@ -1,0 +1,73 @@
+{
+ "Device" : "GW1NR-9C",
+ "Files" : [
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/ALU.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/CLK_Div.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/Cpu5_5.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/INTERRUPT.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/MUX4.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/OR2.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/PC.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/RAM.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/REGFILE.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/UC.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/matrice.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/stack.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/top.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/gowin_prom/gowin_prom.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/src/MUXdeux.v",
+   "Type" : "verilog"
+  }
+ ],
+ "IncludePath" : [
+
+ ],
+ "LoopLimit" : 2000,
+ "ResultFile" : "C:/Users/redsq/Documents/logisim/Tang nano 9k/CPU5_5/impl/temp/rtl_parser.result",
+ "Top" : "",
+ "VerilogStd" : "sysv",
+ "VhdlStd" : "vhdl_93"
+}
