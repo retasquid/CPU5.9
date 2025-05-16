@@ -1,0 +1,17 @@
+module CLK_Div(
+    output reg clk_out,
+    input wire clk_in
+);
+
+    reg[23:0] cnt;
+
+    always@(posedge clk_in) begin
+        if(cnt==(24'd134999)) begin //d13499999
+            cnt<=1'b0;
+            clk_out<=~clk_out;
+        end else begin
+             cnt<=cnt+24'b1;
+        end
+    end
+
+endmodule
