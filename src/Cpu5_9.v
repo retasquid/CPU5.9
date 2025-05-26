@@ -24,8 +24,6 @@
     assign R1 =  ROMdata[19:16];
     assign R2 =  ROMdata[15:12];
     assign Imm = ROMdata[15:0];
-
-    assign  TEST = ROMaddr[7:0];
     
     ALU alu_inst(
         .S(S),

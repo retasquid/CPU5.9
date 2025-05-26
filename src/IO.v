@@ -19,26 +19,30 @@ module IO(
     input wire rst
 );
     // Registres pour les interfaces SPI et UART
-    reg [7:0] tmp_dout, UARTOut;
-    wire [7:0] tmp_din, UARTIn;
+    reg [7:0] tx_spi, UARTOut;
+    wire [7:0] rx_spi, UARTIn;
     reg sendSPI, sendUART;
     reg [23:0] baud;
     
     // Drapeaux internes
     wire spi_busy, uart_busy;
     
+    reg[7:0] confspi;
+    
     // Instanciation du module SPI
-    SPI spi(
-        .MoSi(MoSi),
-        .clkOUT(clkOUT),
-        .CS(CSout),
-        .DATAin(tmp_din),
-        .DATAout(tmp_dout),
-        .send(sendSPI),
-        .MiSo(MiSo),
-        .clk(clk),
+    spi_master SPI(
+        .clk1(clk),
+        .clk2(clk_xtal),
         .rst(rst),
-        .busy(spi_busy)  // Supposons que le module SPI a un signal busy
+        .tx_data(tx_spi), // Données à transmettre
+        .rx_data(rx_spi),// Données reçues
+        .start_tx(sendSPI),
+        .busy(spi_busy),
+        .conf(confspi),
+        .spi_clk(clkOUT),
+        .spi_mosi(MoSi),
+        .spi_miso(MiSo),
+        .spi_cs_n(CSout)
     );
     
     // Instanciation du module UART
@@ -50,7 +54,7 @@ module IO(
         .rx(rx),                 // Ligne de réception
         .tx(tx),                 // Ligne de transmission
         .DataIn(UARTIn),         // Données reçues
-        .busy(uart_busy)         // Supposons que le module UART a un signal busy
+        .busy(uart_busy)
     );
     
     // Définition des adresses des périphériques
@@ -59,10 +63,11 @@ module IO(
     localparam ADDR_GPO0 = 14'd2;
     localparam ADDR_GPO1 = 14'd3;
     localparam ADDR_SPI  = 14'd4;
-    localparam ADDR_UART = 14'd5;
-    localparam ADDR_BAUD_LOW = 14'd6;
-    localparam ADDR_BAUD_HIGH = 14'd7;
-    localparam ADDR_STATUS = 14'd8;
+    localparam ADDR_CONFSPI  = 14'd5;
+    localparam ADDR_UART = 14'd6;
+    localparam ADDR_BAUD_LOW = 14'd7;
+    localparam ADDR_BAUD_HIGH = 14'd8;
+    localparam ADDR_STATUS = 14'd9;
     
     // Registres de statut
     reg [15:0] status_reg;
@@ -73,7 +78,7 @@ module IO(
             // Réinitialisation de tous les registres
             GPO0 <= 8'b00000000;
             GPO1 <= 8'b00000000;
-            tmp_dout <= 8'b00000000;
+            tx_spi <= 8'b00000000;
             UARTOut <= 8'b00000000;
             sendSPI <= 1'b0;
             sendUART <= 1'b0;
@@ -117,10 +122,17 @@ module IO(
                     
                     ADDR_SPI: begin
                         if(write) begin
-                            tmp_dout <= DATAout[7:0];
+                            tx_spi <= DATAout[7:0];
                             if(DATAout[8] && !spi_busy) sendSPI <= 1'b1;
                         end
-                        DATAin <= {8'b00000000, tmp_din};
+                        DATAin <= {8'b00000000, rx_spi};
+                    end
+
+                    ADDR_CONFSPI: begin
+                        if(write) begin
+                            confspi <= DATAout[7:0];
+                        end
+                        DATAin <= {8'b00000000, confspi};
                     end
                     
                     ADDR_UART: begin

@@ -49,7 +49,7 @@ module top(
     RAM ram(
         .DoutRAM(DoutRAM_ram),
         .DinRAM(DinRAM),
-        .AddrRAM(AddrRAM[8:0]),
+        .AddrRAM(AddrRAM[7:0]),
         .write(write),
         .clk(clk_out),
         .CS(CS1)
