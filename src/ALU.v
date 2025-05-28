@@ -18,12 +18,12 @@ module ALU (
             3'b000: begin // Addition
                 {carry, S} = {1'b0, A} + {1'b0, B};
                 // Overflow se produit quand les signes de A et B sont les memes, mais différents de result
-                overflow = (carry ^ S[15]);
+                overflow =  S[15];
             end
             3'b001: begin // Soustraction
                 {carry, S} = {1'b0, A} - {1'b0, B};
                 // Overflow se produit quand les signes de A et -B sont les memes, mais différents de result
-                overflow =  (carry ^ S[15]);
+                overflow =   S[15];
             end
             3'b010: begin // Décalage à gauche
                 S = A << B[3:0];
@@ -59,7 +59,7 @@ module ALU (
     end
     
     // Mise à jour de S et des drapeaux sur front d'horloge
-    always @(negedge clk or posedge rst) begin
+    always @(posedge clk or posedge rst) begin
         if (rst) begin
             FLAGS <= 4'b0001; // Reset: mettre à 1 uniquement le drapeau de reset
         end else begin

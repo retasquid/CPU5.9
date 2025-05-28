@@ -82,22 +82,21 @@ module IO(
             UARTOut <= 8'b00000000;
             sendSPI <= 1'b0;
             sendUART <= 1'b0;
-            baud <= 24'd115200;  // Valeur par défaut pour le baud rate (115200)
+            baud <= 24'd116200;  // Valeur par défaut pour le baud rate (115200)
             DATAin <= 16'bz;
             status_reg <= 16'b0;
         end else begin
             // Mise à jour des indicateurs d'état
-            status_reg[0] <= spi_busy;
-            status_reg[1] <= uart_busy;
+            status_reg<= {14'b0, uart_busy, spi_busy};
             
             // Réinitialiser les signaux de send après qu'ils ont été utilisés
             if (sendSPI && spi_busy) begin
                 sendSPI <= 1'b0;
             end
             
-            if (sendUART && uart_busy) begin
+            /*if (sendUART && uart_busy) begin
                 sendUART <= 1'b0;
-            end
+            end*/
             
             // Traitement des accès au bus
             if(CS) begin
@@ -138,7 +137,7 @@ module IO(
                     ADDR_UART: begin
                         if(write) begin
                             UARTOut <= DATAout[7:0];
-                            if(DATAout[8] && !uart_busy) sendUART <= 1'b1;
+                            sendUART <=  DATAout[8];
                         end
                         DATAin <= {8'b00000000, UARTIn};
                     end
@@ -154,7 +153,7 @@ module IO(
                     end
                     
                     ADDR_STATUS: begin
-                        DATAin <= {8'b00000000, status_reg};  // Registre de statut
+                        DATAin <= status_reg;  // Registre de statut
                     end
                     
                     default: begin

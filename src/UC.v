@@ -36,7 +36,7 @@ module UC(
         UCrom[15] = 12'h93c; 
         UCrom[16] = 12'h91e;  
         UCrom[17] = 12'h93e;
-        UCrom[18] = 12'h400;  
+        UCrom[18] = 12'hc00;  
         UCrom[19] = 12'h980;  
         UCrom[20] = 12'h801; 
         UCrom[21] = 12'h821; 
@@ -56,5 +56,5 @@ module UC(
         assign OPalu=temp[3:1];
         assign Wbus=temp[0] | CallInt;
         assign JMP=temp[9]|(temp[10]&FLAG[A]);
-        assign PCpp=~interrupt & temp[11];
+        assign PCpp= temp[11]&(~JMP);
 endmodule

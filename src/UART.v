@@ -19,7 +19,7 @@ module UART(
     reg[3:0] rx_bit_count;       // Compteur de bits reçus
     reg rx_d1, rx_d2;            // Pour détecter le front descendant de rx
     
-    assign busy=transmitting|receiving;
+    assign busy=transmitting;
 
     // Initialisation
     initial begin
@@ -74,7 +74,7 @@ module UART(
     // Logique de réception
     always @(posedge clk_baud) begin
         // Détecter un bit de start
-        if(!receiving && rx_d1 == 1'b0) begin //rx_d2 == 1'b0 && 
+        if(!receiving&& rx_d1 == 1'b0) begin// && rx_d2 == 1'b0 
             receiving <= 1'b1;
             rx_bit_count <= 4'b0;
             rx_shift_reg <= 10'b0;
