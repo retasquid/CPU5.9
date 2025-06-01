@@ -16,7 +16,7 @@ module PC(
         end else begin
             if(PCpp) begin
                 ADDRout<=ADDRout+16'b1;
-            end else if(jmp || INTjmp) begin
+            end else if(jmp || INTjmp || Ret) begin
                 if(Ret) begin
                     ADDRout<=DoST;
                 end else if(INTjmp && !Ret) begin

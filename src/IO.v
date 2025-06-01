@@ -73,7 +73,7 @@ module IO(
     reg [15:0] status_reg;
     
     // Mise à jour des registres
-    always @(negedge clk or posedge rst) begin
+    always @(posedge clk or posedge rst) begin
         if(rst) begin
             // Réinitialisation de tous les registres
             GPO0 <= 8'b00000000;
@@ -83,55 +83,33 @@ module IO(
             sendSPI <= 1'b0;
             sendUART <= 1'b0;
             baud <= 24'd116200;  // Valeur par défaut pour le baud rate (115200)
-            DATAin <= 16'bz;
             status_reg <= 16'b0;
         end else begin
             // Mise à jour des indicateurs d'état
             status_reg<= {14'b0, uart_busy, spi_busy};
-            
-            // Réinitialiser les signaux de send après qu'ils ont été utilisés
-            if (sendSPI && spi_busy) begin
-                sendSPI <= 1'b0;
-            end
-            
-            /*if (sendUART && uart_busy) begin
-                sendUART <= 1'b0;
-            end*/
-            
+
             // Traitement des accès au bus
-            if(CS) begin
-                case(adresse)
-                    ADDR_GPI0: begin
-                        DATAin <= {8'b00000000, GPI0};
-                    end
-                    
-                    ADDR_GPI1: begin
-                        DATAin <= {8'b00000000, GPI1};
-                    end
-                    
+            if(CS)begin
+                case(adresse)                    
                     ADDR_GPO0: begin
                         if(write) GPO0 <= DATAout[7:0];
-                        DATAin <= {8'b00000000, GPO0};
                     end
                     
                     ADDR_GPO1: begin
                         if(write) GPO1 <= DATAout[7:0];
-                        DATAin <= {8'b00000000, GPO1};
                     end
                     
                     ADDR_SPI: begin
                         if(write) begin
                             tx_spi <= DATAout[7:0];
-                            if(DATAout[8] && !spi_busy) sendSPI <= 1'b1;
+                            sendSPI <=  DATAout[8];
                         end
-                        DATAin <= {8'b00000000, rx_spi};
                     end
 
                     ADDR_CONFSPI: begin
                         if(write) begin
                             confspi <= DATAout[7:0];
                         end
-                        DATAin <= {8'b00000000, confspi};
                     end
                     
                     ADDR_UART: begin
@@ -139,30 +117,69 @@ module IO(
                             UARTOut <= DATAout[7:0];
                             sendUART <=  DATAout[8];
                         end
-                        DATAin <= {8'b00000000, UARTIn};
                     end
                     
                     ADDR_BAUD_LOW: begin
                         if(write) baud[15:0] <= DATAout;
-                        DATAin <= baud[15:0];
                     end
                     
                     ADDR_BAUD_HIGH: begin
                         if(write) baud[23:16] <= DATAout[7:0];
-                        DATAin <= {8'b00000000, baud[23:16]};
-                    end
-                    
-                    ADDR_STATUS: begin
-                        DATAin <= status_reg;  // Registre de statut
-                    end
-                    
-                    default: begin
-                        DATAin <= 16'bz;  // Haute impédance si adresse non valide
                     end
                 endcase
-            end else begin
-                DATAin <= 16'bz;  // Haute impédance si CS inactif
             end
+        end
+    end
+
+    always@(*) begin
+        if(CS)begin
+            case(adresse)
+                ADDR_GPI0: begin
+                    DATAin <= {8'b00000000, GPI0};
+                end
+                
+                ADDR_GPI1: begin
+                    DATAin <= {8'b00000000, GPI1};
+                end
+                
+                ADDR_GPO0: begin
+                    DATAin <= {8'b00000000, GPO0};
+                end
+                
+                ADDR_GPO1: begin
+                    DATAin <= {8'b00000000, GPO1};
+                end
+                
+                ADDR_SPI: begin
+                    DATAin <= {8'b00000000, rx_spi};
+                end
+
+                ADDR_CONFSPI: begin
+                    DATAin <= {8'b00000000, confspi};
+                end
+                
+                ADDR_UART: begin
+                    DATAin <= {8'b00000000, UARTIn};
+                end
+                
+                ADDR_BAUD_LOW: begin
+                    DATAin <= baud[15:0];
+                end
+                
+                ADDR_BAUD_HIGH: begin
+                    DATAin <= {8'b00000000, baud[23:16]};
+                end
+                
+                ADDR_STATUS: begin
+                   DATAin <= status_reg;  // Registre de statut
+                end
+                
+                default: begin
+                    DATAin <= 16'bz;  // Haute impédance si adresse non valide
+                end
+            endcase
+        end else begin
+            DATAin <= 16'bz;
         end
     end
 endmodule
