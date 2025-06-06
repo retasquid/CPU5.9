@@ -1,56 +1,27 @@
 module INTERRUPT(
-    output wire [15:0] Addr,
-    output wire Call,
-    output wire INTjmp,
-    output wire intSTOP,
+    output reg [28:0] Instruction,
+    output reg interrupt,
     input wire [7:0] interrupts,
     input wire CLK,
     input wire RST
 );
-    assign Addr=0;
-    assign Call=0;
-    assign INTjmp=0;
-    assign intSTOP=0;
-/*
     // Registres internes
     reg [15:0] decoder;
     reg [1:0] count;
-    reg Q;
-    reg J, K;
     wire any_interrupt;
-    
+
+    reg[1:0] state, next_state;
+
+    localparam [2:0]  IDLE           = 2'b000;
+    localparam [2:0]  SAVE_PC    = 2'b001;
+    localparam [2:0] DEC_SP      =2'b010;
+    localparam [2:0] JMP           = 2'b011;
+
     // Détection d'interruption - signal combinatoire
     assign any_interrupt = |interrupts;  // OU logique de tous les bits d'interruption
     
-    // Gestion du flip-flop JK pour la séquence d'interruption
-    always @(posedge CLK or posedge RST) begin
-        if (RST) begin
-            Q <= 1'b0;
-        end else begin
-            if (J && K) begin
-                Q <= ~Q;
-            end else if (J && !K) begin
-                Q <= 1'b1;
-            end else if (!J && K) begin
-                Q <= 1'b0;
-            end
-            // Cas J=0, K=0: Q conserve sa valeur
-        end
-    end
-    
     // Logique de décodage et de séquençage
-    always @(negedge CLK or posedge RST) begin
-        if (RST) begin
-            // Réinitialisation synchrone de tous les registres
-            decoder <= 16'b0;
-            Addr <= 16'b0;
-            Call <= 1'b0;
-            INTjmp <= 1'b0;
-            intSTOP <= 1'b0;
-            count <= 2'b0;
-            J <= 1'b0;
-            K <= 1'b0;
-        end else begin
+    always @(*) begin
             // Décodage des interruptions par priorité
             casez (interrupts)
                 8'b???????1: decoder <= 16'h00F8;  // Interruption 0 (priorité la plus haute)
@@ -63,51 +34,60 @@ module INTERRUPT(
                 8'b10000000: decoder <= 16'h00FF;  // Interruption 7 (priorité la plus basse)
                 default: decoder <= 16'b0;
             endcase
-            
-            // J prend la valeur de any_interrupt
-            J <= any_interrupt;
-            
-            // Mettre à jour intSTOP avec la valeur actuelle de Q
-            intSTOP <= Q;
-            
-            // Gestion de l'adresse d'interruption
-            if (any_interrupt && !Q) begin
-                Addr <= decoder;  // Charger l'adresse du gestionnaire d'interruption
-            end else begin
-                Addr <= 16'b0;    // Aucune adresse d'interruption
-            end
-            
-            // Gestion de la séquence d'interruption
-            if (Q) begin
-                // Machine à état pour la séquence d'interruption
-                case (count)
-                    2'b00, 2'b01: begin
-                        // Phases 0 et 1: Appel de la routine d'interruption
-                        Call <= 1'b1;
-                        INTjmp <= 1'b0;
-                        K <= 1'b0;
+    end
+
+    // Machine à états principale - Mise à jour sur front montant de clk
+    always @(posedge CLK or posedge RST) begin
+        if (RST) begin
+            state <= IDLE;
+        end else begin
+            state <= next_state;
+            case (state)
+                IDLE: begin
+                    if (any_interrupt) begin
+                        Instruction<=29'b10110000000001111000000000001;
+                        interrupt<=1'b1;
+                        interrupt<=1'b1;
                     end
-                    2'b10: begin
-                        // Phase 2: Saut à l'adresse d'interruption
-                        Call <= 1'b0;
-                        INTjmp <= 1'b1;
-                        K <= 1'b0;
-                    end
-                    2'b11: begin
-                        // Phase 3: Fin de la séquence d'interruption
-                        Call <= 1'b0;
-                        INTjmp <= 1'b0;
-                        K <= 1'b1;  // Réinitialiser le flip-flop Q
-                    end
-                endcase
-                count <= count + 1'b1;  // Incrémenter le compteur de séquence
-            end else begin
-                // Pas en séquence d'interruption
-                Call <= 1'b0;
-                INTjmp <= 1'b0;
-                K <= 1'b0;
-                count <= 2'b00;  // Réinitialiser le compteur
-            end
+                end
+                
+                SAVE_PC: begin
+                        Instruction<=29'b00101111111110000000000000001;
+                end
+                
+                DEC_SP: begin
+                        Instruction<={29'b1001000000000,decoder};
+                end
+
+                JMP: begin
+                    interrupt<=1'b0;
+                end
+
+            endcase
         end
-    end*/
+    end
+    
+    // Logique de transition d'états - basée sur les fronts SPI
+    always @(*) begin
+        next_state = state;
+        case (state)
+            IDLE: begin
+                    if (any_interrupt) begin
+                        next_state<=SAVE_PC;
+                    end
+            end
+            
+            SAVE_PC: begin
+                next_state<=DEC_SP;
+            end
+            
+            DEC_SP: begin
+                next_state<=JMP;
+            end
+             
+            JMP: begin
+                next_state<=IDLE;
+            end
+        endcase
+    end
 endmodule

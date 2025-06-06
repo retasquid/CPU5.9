@@ -10,7 +10,7 @@ module CLK_Div(
     );
     
     always@(posedge clk_OSC) begin
-        if(cnt==21'd102399) begin //d1023999
+        if(cnt==21'd1023) begin //d1023999
             cnt<=1'b0;
             clk_out<=~clk_out;
         end else begin

@@ -9,26 +9,27 @@
     input wire clk_bus,
     input wire rst_bus
 );
-    wire ENflags, SBalu, Wreg, INTjmp, jmp, PCpp, Ret, Call, outOR, CallINT,IntSTOP;
+    wire ENflags, SBalu, Wreg, INTjmp, jmp, PCpp, Ret, Call, outOR;
     wire[1:0] Sregin;
     wire[2:0] OPalu;
     wire[3:0] FLAGS;
-    wire[15:0] B, S, MUXREG,Aint;
+    wire[15:0] B, S, MUXREG,Dout_mux;
+    wire[28:0] Inst,data;
     
     wire[4:0] OPcode;
     wire[3:0] Rd,R1,R2;
     wire[15:0] Imm;
-    
-    assign OPcode = ROMdata[28:24];
-    assign Rd =  ROMdata[23:20];
-    assign R1 =  ROMdata[19:16];
-    assign R2 =  ROMdata[15:12];
-    assign Imm = ROMdata[15:0];
+    assign data = interrupt?Inst:ROMdata;
+    assign OPcode = data[28:24];
+    assign Rd =  data[23:20];
+    assign R1 =  data[19:16];
+    assign R2 =  data[15:12];
+    assign Imm = data[15:0];
     
     ALU alu_inst(
         .S(S),
         .FLAGS(FLAGS),
-        .A(Dout),
+        .A(Dout_mux),
         .B(Addr),
         .OPALU(OPalu),
         .enFLAGS(ENflags),
@@ -38,19 +39,17 @@
 
     PC pc_inst(
         .ADDRout(ROMaddr),
-        .INTjmp(INTjmp),
         .jmp(jmp),
         .PCpp(PCpp),
         .Ret(Ret),
         .CLK(clk_bus),
         .RST(rst_bus),
         .Imm(Imm),
-        .Aint(Aint),
-        .DoST(Dout)
+        .DoST(Din)
     );
 
     REGFILE regfile_inst(
-        .A(Dout),
+        .A(Dout_mux),
         .B(B),
         .Rd(MUXREG),
         .RdSEL(Rd),
@@ -75,15 +74,13 @@
         .A(R1[1:0]),
         .FLAG(FLAGS),
         .CLK(clk_bus),
-        .interrupt(1'b0),
-        .CallInt(CallINT)
+        .interrupt(interrupt),
+        .Call(Call)
     );
 
     INTERRUPT interrupt_inst(
-        .Addr(Aint),
-        .Call(CallINT),
-        .INTjmp(INTjmp),
-        .intSTOP(IntSTOP),
+        .Instruction(Inst),
+        .interrupt(interrupt),
         .interrupts(Interrupts),
         .CLK(clk_bus),
         .RST(rst_bus)
@@ -103,5 +100,12 @@
         .IN0(B),
         .IN1(Imm),
         .SEL(SBalu)
+    );
+
+    MUXdeux mux2_Dout(
+        .OUT(Dout),
+        .IN0(Dout_mux),
+        .IN1(ROMaddr+Imm[11:0]),
+        .SEL(Call)
     );
 endmodule

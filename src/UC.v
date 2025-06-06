@@ -13,7 +13,7 @@ module UC(
     input wire [3:0] FLAG,
     input wire CLK,
     input wire interrupt,
-    input wire CallInt
+    output wire Call
    );
     reg [11:0] UCrom [0:24];
     reg [11:0] temp;
@@ -40,7 +40,7 @@ module UC(
         UCrom[19] = 12'h980;  
         UCrom[20] = 12'h801; 
         UCrom[21] = 12'h821; 
-        UCrom[22] = 12'h9c0; 
+        UCrom[22] = 12'h801; 
         UCrom[23] = 12'h600; 
         UCrom[24] = 12'h9a0; 
     end
@@ -54,7 +54,8 @@ module UC(
         assign SBalu=temp[5];
         assign ENflag=temp[4];
         assign OPalu=temp[3:1];
-        assign Wbus=temp[0] | CallInt;
-        assign JMP=temp[9]|(temp[10]&FLAG[A]);
-        assign PCpp= temp[11]&(~JMP);
+        assign Wbus=temp[0];
+        assign JMP=(temp[9]|(temp[10]&FLAG[A]))&(~interrupt);
+        assign PCpp= temp[11]&(~JMP)&(~interrupt);
+        assign Call = (OPCode==5'b10110)?1'b1:1'b0;
 endmodule

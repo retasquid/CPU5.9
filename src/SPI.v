@@ -52,22 +52,20 @@ module spi_master (
     
     // Calcul du diviseur d'horloge
     wire [7:0] clk_div_value;
-    assign clk_div_value = (clk_divider == 3'b000) ? 8'd1  :  // Pas de division
-                          (clk_divider == 3'b001) ? 8'd2  :  // /2
-                          (clk_divider == 3'b010) ? 8'd4  :  // /4
-                          (clk_divider == 3'b011) ? 8'd8  :  // /8
-                          (clk_divider == 3'b100) ? 8'd16 :  // /16
-                          (clk_divider == 3'b101) ? 8'd32 :  // /32
-                          (clk_divider == 3'b110) ? 8'd64 :  // /64
-                                                     8'd128;  // /128
-    
+    assign clk_div_value = (clk_divider == 3'b001) ? 8'd1  :  // /2
+                          (clk_divider == 3'b010) ? 8'd2  :  // /4
+                          (clk_divider == 3'b011) ? 8'd4 :  // /8
+                          (clk_divider == 3'b100) ? 8'd8 :  // /16
+                          (clk_divider == 3'b101) ? 8'd16 :  // /32
+                          (clk_divider == 3'b110) ? 8'd32 :  // /64
+                                                     8'd64;  // /128
     // Génération de l'horloge SPI
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             clk_div_counter <= 8'b0;
             spi_clk_int <= cpol;  // État de repos selon CPOL
         end else begin
-            if (spi_clk_en) begin
+            if (spi_clk_en && (clk_divider != 3'b000)) begin
                 if (clk_div_counter >= (clk_div_value - 1)) begin
                     clk_div_counter <= 8'b0;
                     spi_clk_int <= ~spi_clk_int;
@@ -84,9 +82,16 @@ module spi_master (
     // Sortie de l'horloge SPI
     always @(*) begin
         if (spi_clk_en) begin
-            spi_clk = spi_clk_int;
+            if (clk_divider == 3'b000) begin
+                // Mode sans division : horloge système directe
+                spi_clk = clk;
+            end else begin
+                // Mode avec division : horloge divisée
+                spi_clk = spi_clk_int;
+            end
         end else begin
-            spi_clk = cpol;  // État de repos selon CPOL
+            // État de repos selon CPOL
+            spi_clk = cpol;
         end
     end
     
