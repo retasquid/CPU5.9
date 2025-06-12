@@ -2,89 +2,119 @@ module INTERRUPT(
     output reg [28:0] Instruction,
     output reg interrupt,
     input wire [7:0] interrupts,
+    input wire [15:0] conf,
     input wire CLK,
     input wire RST
 );
     // Registres internes
-    reg [15:0] decoder;
-    reg [1:0] count;
+    reg launch;
+    reg[15:0] decoder, sav_decoder;
+    reg[1:0] count;
     wire any_interrupt;
-
+    reg[7:0] level, level_sav;
     reg[1:0] state, next_state;
-
+    wire[7:0] interrupt_mask, mode;
+    assign {mode, interrupt_mask}=conf;
     localparam [2:0]  IDLE           = 2'b000;
     localparam [2:0]  SAVE_PC    = 2'b001;
     localparam [2:0] DEC_SP      =2'b010;
     localparam [2:0] JMP           = 2'b011;
-
     // Détection d'interruption - signal combinatoire
-    assign any_interrupt = |interrupts;  // OU logique de tous les bits d'interruption
-    
+    assign any_interrupt = |(interrupts&interrupt_mask);  // OU logique de tous les bits d'interruption
+
     // Logique de décodage et de séquençage
     always @(*) begin
             // Décodage des interruptions par priorité
-            casez (interrupts)
-                8'b???????1: decoder <= 16'h00F8;  // Interruption 0 (priorité la plus haute)
-                8'b??????10: decoder <= 16'h00F9;  // Interruption 1
-                8'b?????100: decoder <= 16'h00FA;  // Interruption 2
-                8'b????1000: decoder <= 16'h00FB;  // Interruption 3
-                8'b???10000: decoder <= 16'h00FC;  // Interruption 4
-                8'b??100000: decoder <= 16'h00FD;  // Interruption 5
-                8'b?1000000: decoder <= 16'h00FE;  // Interruption 6
-                8'b10000000: decoder <= 16'h00FF;  // Interruption 7 (priorité la plus basse)
+            level=1<<(decoder[3:0]-8);
+            casez (interrupts&interrupt_mask)
+                8'b???????1: begin
+                    decoder <= 16'hFFF8;  // Interruption 0 (priorité la plus haute)
+                end
+                8'b??????10: begin
+                    decoder <= 16'hFFF9;  // Interruption 1
+                end
+                8'b?????100: begin
+                    decoder <= 16'hFFFA;  // Interruption 2
+                end
+                8'b????1000: begin
+                    decoder <= 16'hFFFB;  // Interruption 3
+                end
+                8'b???10000: begin
+                    decoder <= 16'hFFFC;  // Interruption 4
+                end
+                8'b??100000: begin
+                    decoder <= 16'hFFFD;  // Interruption 5
+                end
+                8'b?1000000: begin
+                    decoder <= 16'hFFFE;  // Interruption 6
+                end
+                8'b10000000: begin
+                    decoder <= 16'hFFFF;  // Interruption 7 (priorité la plus basse)
+                end
                 default: decoder <= 16'b0;
             endcase
     end
-
-    // Machine à états principale - Mise à jour sur front montant de clk
-    always @(posedge CLK or posedge RST) begin
+    // Machine �  états principale - Mise �  jour sur front montant de clk
+    always @(negedge CLK or posedge RST) begin
         if (RST) begin
             state <= IDLE;
         end else begin
             state <= next_state;
             case (state)
                 IDLE: begin
-                    if (any_interrupt) begin
+                    if (launch) begin
                         Instruction<=29'b10110000000001111000000000001;
                         interrupt<=1'b1;
-                        interrupt<=1'b1;
+                        sav_decoder<=decoder;
+                        level_sav<=level;
                     end
                 end
-                
+
                 SAVE_PC: begin
-                        Instruction<=29'b00101111111110000000000000001;
-                end
-                
-                DEC_SP: begin
-                        Instruction<={29'b1001000000000,decoder};
+                    Instruction<=29'b00101111111110000000000000001;
                 end
 
+                DEC_SP: begin
+                    Instruction<=29'b10010000000000000000000000000|sav_decoder;
+                end
                 JMP: begin
                     interrupt<=1'b0;
+                    sav_decoder<=16'b0;
                 end
-
             endcase
         end
     end
-    
+
     // Logique de transition d'états - basée sur les fronts SPI
     always @(*) begin
         next_state = state;
         case (state)
             IDLE: begin
-                    if (any_interrupt) begin
-                        next_state<=SAVE_PC;
-                    end
+				if(mode&level)begin
+					if(any_interrupt && ((level&level_sav)==8'b0))begin
+						next_state<=SAVE_PC;
+						launch<=1'b1;
+					end else begin
+						launch<=1'b0;
+					end
+				end else begin
+					if (any_interrupt)begin
+						next_state<=SAVE_PC;
+						launch<=1'b1;
+					end else begin
+						launch<=1'b0;
+					end
+				end
             end
-            
+
             SAVE_PC: begin
                 next_state<=DEC_SP;
             end
-            
+
             DEC_SP: begin
                 next_state<=JMP;
             end
-             
+
             JMP: begin
                 next_state<=IDLE;
             end
