@@ -19,16 +19,15 @@ module INTERRUPT(
     localparam [2:0]  SAVE_PC    = 2'b001;
     localparam [2:0] DEC_SP      =2'b010;
     localparam [2:0] JMP           = 2'b011;
-    // Détection d'interruption - signal combinatoire
+    // DÃ©tection d'interruption - signal combinatoire
     assign any_interrupt = |(interrupts&interrupt_mask);  // OU logique de tous les bits d'interruption
 
-    // Logique de décodage et de séquençage
+    // Logique de dÃ©codage et de sÃ©quenÃ§age
     always @(*) begin
-            // Décodage des interruptions par priorité
-            level=1<<(decoder[3:0]-8);
+            // DÃ©codage des interruptions par prioritÃ©
             casez (interrupts&interrupt_mask)
                 8'b???????1: begin
-                    decoder <= 16'hFFF8;  // Interruption 0 (priorité la plus haute)
+                    decoder <= 16'hFFF8;  // Interruption 0 (prioritÃ© la plus haute)
                 end
                 8'b??????10: begin
                     decoder <= 16'hFFF9;  // Interruption 1
@@ -49,12 +48,14 @@ module INTERRUPT(
                     decoder <= 16'hFFFE;  // Interruption 6
                 end
                 8'b10000000: begin
-                    decoder <= 16'hFFFF;  // Interruption 7 (priorité la plus basse)
+                    decoder <= 16'hFFFF;  // Interruption 7 (prioritÃ© la plus basse)
                 end
-                default: decoder <= 16'b0;
+                default: decoder <= 16'd0;
             endcase
+            
+            level=decoder?1<<(decoder[3:0]-8):8'b0;
     end
-    // Machine �  états principale - Mise �  jour sur front montant de clk
+    // Machine Ã  Ã©tats principale - Mise Ã  jour sur front montant de clk
     always @(negedge CLK or posedge RST) begin
         if (RST) begin
             state <= IDLE;
@@ -85,30 +86,27 @@ module INTERRUPT(
         end
     end
 
-    // Logique de transition d'états - basée sur les fronts SPI
+    // Logique de transition d'Ã©tats - basÃ©e sur les fronts SPI
     always @(*) begin
         next_state = state;
         case (state)
             IDLE: begin
-				if(mode&level)begin
-					if(any_interrupt && ((level&level_sav)==8'b0))begin
+				if(mode&level_sav)begin
+					if(any_interrupt && ((level_sav&level)^level_sav))begin
 						next_state<=SAVE_PC;
 						launch<=1'b1;
-					end else begin
-						launch<=1'b0;
-					end
+					end 
 				end else begin
 					if (any_interrupt)begin
 						next_state<=SAVE_PC;
 						launch<=1'b1;
-					end else begin
-						launch<=1'b0;
-					end
+					end 
 				end
             end
 
             SAVE_PC: begin
                 next_state<=DEC_SP;
+                launch<=1'b0;
             end
 
             DEC_SP: begin

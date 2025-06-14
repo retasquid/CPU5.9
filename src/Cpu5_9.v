@@ -2,10 +2,12 @@
     output wire[15:0] Dout,
     output wire[15:0] Addr,
     output wire write,
+    output wire read,
     output wire[15:0] ROMaddr,
     input wire[28:0] ROMdata,
     input wire[15:0] Din,
     input wire[7:0] Interrupts,
+    input wire[15:0] confINT,
     input wire clk_bus,
     input wire rst_bus
 );
@@ -13,12 +15,13 @@
     wire[1:0] Sregin;
     wire[2:0] OPalu;
     wire[3:0] FLAGS;
-    wire[15:0] B, S, MUXREG,Dout_mux;
+    wire[15:0] B, S, MUXREG, Dout_mux;
     wire[28:0] Inst,data;
     
     wire[4:0] OPcode;
     wire[3:0] Rd,R1,R2;
     wire[15:0] Imm;
+
     assign data = interrupt?Inst:ROMdata;
     assign OPcode = data[28:24];
     assign Rd =  data[23:20];
@@ -74,14 +77,15 @@
         .A(R1[1:0]),
         .FLAG(FLAGS),
         .CLK(clk_bus),
-        .interrupt(interrupt),
-        .Call(Call)
+        .Call(Call),
+        .Rbus(read)
     );
 
     INTERRUPT interrupt_inst(
         .Instruction(Inst),
         .interrupt(interrupt),
         .interrupts(Interrupts),
+        .conf(confINT),
         .CLK(clk_bus),
         .RST(rst_bus)
     );

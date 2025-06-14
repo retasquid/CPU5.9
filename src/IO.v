@@ -2,7 +2,7 @@ module IO(
     input wire [7:0] GPI0,
     input wire [7:0] GPI1,
     output reg [7:0] GPO0,
-    output reg [7:0] GPO1,
+    output reg [10:0] GPO1,
     input wire CS,
     output wire MoSi,
     output wire clkOUT,
@@ -14,14 +14,18 @@ module IO(
     input wire [15:0] DATAout, 
     input wire [13:0] adresse,
     input wire write,
+    input wire read,
     input wire clk,
     input wire clk_xtal,
-    input wire rst
+    input wire clk_xtal27,
+    output reg [15:0] confINT,
+    input wire rst,
+    output wire clk_baud
 );
     // Registres pour les interfaces SPI et UART
     reg [7:0] tx_spi, UARTOut;
     wire [7:0] rx_spi, UARTIn;
-    reg sendSPI, sendUART;
+    reg sendSPI, sendUART, readUART;
     reg [23:0] baud;
     
     // Drapeaux internes
@@ -29,10 +33,23 @@ module IO(
     
     reg[7:0] confspi;
     
+    // Définition des adresses des périphériques
+    localparam ADDR_GPI0 = 14'd0;
+    localparam ADDR_GPI1 = 14'd1;
+    localparam ADDR_GPO0 = 14'd2;
+    localparam ADDR_GPO1 = 14'd3;
+    localparam ADDR_SPI  = 14'd4;
+    localparam ADDR_CONFSPI  = 14'd5;
+    localparam ADDR_UART = 14'd6;
+    localparam ADDR_BAUD_LOW = 14'd7;
+    localparam ADDR_BAUD_HIGH = 14'd8;
+    localparam ADDR_STATUS = 14'd9;
+    localparam ADDR_CONFINT = 14'd10;
+    
     // Instanciation du module SPI
     spi_master SPI(
         .clk1(clk),
-        .clk2(clk_xtal),
+        .clk2(clk_xtal27),
         .rst(rst),
         .tx_data(tx_spi), // Données à transmettre
         .rx_data(rx_spi),// Données reçues
@@ -48,46 +65,35 @@ module IO(
     // Instanciation du module UART
     UART uart(
         .baud(baud),             // Paramètre de baud rate
-        .clk_xtal(clk_xtal),     // Signal d'horloge
+        .clk_xtal(clk_xtal27),     // Signal d'horloge
+        .clk_CPU(clk),
         .send(sendUART),         // Signal pour démarrer la transmission
         .DataOut(UARTOut),       // Données à transmettre
         .rx(rx),                 // Ligne de réception
+        .read(readUART),
         .tx(tx),                 // Ligne de transmission
         .DataIn(UARTIn),         // Données reçues
         .busy(uart_busy)
     );
     
-    // Définition des adresses des périphériques
-    localparam ADDR_GPI0 = 14'd0;
-    localparam ADDR_GPI1 = 14'd1;
-    localparam ADDR_GPO0 = 14'd2;
-    localparam ADDR_GPO1 = 14'd3;
-    localparam ADDR_SPI  = 14'd4;
-    localparam ADDR_CONFSPI  = 14'd5;
-    localparam ADDR_UART = 14'd6;
-    localparam ADDR_BAUD_LOW = 14'd7;
-    localparam ADDR_BAUD_HIGH = 14'd8;
-    localparam ADDR_STATUS = 14'd9;
-    
     // Registres de statut
-    reg [15:0] status_reg;
+    wire [15:0] status_reg;
+
+    // Mise à jour des indicateurs d'état
+    assign status_reg= {14'b0, uart_busy, spi_busy};
     
     // Mise à jour des registres
     always @(posedge clk or posedge rst) begin
         if(rst) begin
             // Réinitialisation de tous les registres
-            GPO0 <= 8'b00000000;
-            GPO1 <= 8'b00000000;
+            GPO0 <= 8'b00;
+            GPO1 <= 11'b0;
             tx_spi <= 8'b00000000;
             UARTOut <= 8'b00000000;
             sendSPI <= 1'b0;
             sendUART <= 1'b0;
-            baud <= 24'd116200;  // Valeur par défaut pour le baud rate (115200)
-            status_reg <= 16'b0;
+            baud <= 24'd9602;  // Valeur par défaut pour le baud rate (9600)
         end else begin
-            // Mise à jour des indicateurs d'état
-            status_reg<= {14'b0, uart_busy, spi_busy};
-
             // Traitement des accès au bus
             if(CS)begin
                 case(adresse)                    
@@ -96,7 +102,7 @@ module IO(
                     end
                     
                     ADDR_GPO1: begin
-                        if(write) GPO1 <= DATAout[7:0];
+                        if(write) GPO1 <= DATAout[10:0];
                     end
                     
                     ADDR_SPI: begin
@@ -125,6 +131,10 @@ module IO(
                     
                     ADDR_BAUD_HIGH: begin
                         if(write) baud[23:16] <= DATAout[7:0];
+                    end
+
+                    ADDR_CONFINT: begin
+                        if(write) confINT <= DATAout;
                     end
                 endcase
             end
@@ -160,6 +170,7 @@ module IO(
                 
                 ADDR_UART: begin
                     DATAin <= {8'b00000000, UARTIn};
+                    readUART <= read;
                 end
                 
                 ADDR_BAUD_LOW: begin
@@ -174,12 +185,17 @@ module IO(
                    DATAin <= status_reg;  // Registre de statut
                 end
                 
+                ADDR_CONFINT: begin
+                   DATAin <= confINT;  // Registre de statut
+                end
+                
                 default: begin
                     DATAin <= 16'bz;  // Haute impédance si adresse non valide
                 end
             endcase
         end else begin
             DATAin <= 16'bz;
+            readUART <= 1'b0;
         end
     end
 endmodule

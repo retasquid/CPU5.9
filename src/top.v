@@ -1,31 +1,32 @@
 module top(
     output wire[7:0] out0,
-    output wire[7:0] out1,
-    input wire[7:0] in0,
-    input wire[7:0] in1,
-    output wire MoSi,
-    output wire clkOUT,
-    output wire CSout,
-    input wire MiSo,
+    output wire[10:0] out1,
+    //input wire[7:0] in0,
+    //input wire[7:0] in1,
+    //output wire MoSi,
+    //output wire clkOUT,
+    //output wire CSout,
+    //input wire MiSo,
     output wire tx,
     input wire rx,
 
     input wire[7:0] INT,
 
     input wire rst_n,
-    output wire clk_out
+    input wire clk_xtal,
 
-/*
+
     output wire flash_clk,
     output wire flash_mosi,
     input wire flash_miso,
-    output wire flash_cs_n*/
+    output wire flash_cs_n
 );
-    wire write, rst, clk_OSC,CS0,CS1,CS2,CS3;
-    wire[15:0] AddrRAM,DinRAM,DoutRAM_ram, DoutRAM_io,DoutRAM,ROMaddr;
+    wire write, read, rst, clk_OSC,CS0,CS1,CS2,CS3;
+    wire[15:0] AddrRAM,DinRAM,DoutRAM_ram, DoutRAM_io, DoutRAM, ROMaddr, confINT;
     wire[28:0] ROMdata;
 
     assign rst = ~rst_n;
+    //assign out0 = ROMaddr;
 
    assign {CS3,CS2,CS1,CS0}= 4'b1<<AddrRAM[15:14];
    assign DoutRAM = CS0 ? DoutRAM_io : 
@@ -41,18 +42,20 @@ module top(
         .Dout(DinRAM),
         .Addr(AddrRAM),
         .write(write),
+        .read(read),
         .ROMaddr(ROMaddr),
         .ROMdata(ROMdata),
         .Din(DoutRAM),
         .Interrupts(INT),
+        .confINT(confINT),
         .clk_bus(clk_out),
         .rst_bus(rst)
     );
     
-    ROM rom(
+    /*ROM rom(
         .DataROM(ROMdata),
-        .AddrROM(ROMaddr[10:0])
-    );
+        .AddrROM(ROMaddr[7:0])
+    );*/
 
     RAM ram(
         .DoutRAM(DoutRAM_ram),
@@ -79,14 +82,17 @@ module top(
         .DATAout(DinRAM), 
         .adresse(AddrRAM[13:0]),
         .write(write),
+        .read(read),
         .clk(clk_out),
         .clk_xtal(clk_OSC),
+        .clk_xtal27(clk_xtal),
+        .confINT(confINT),
         .rst(rst)
     );
-/*
+
     Flash_Controler MX25L3233F(
-    .adresse(ROMaddr),
-    .read_enable(clk_out),          // Signal pour démarrer une lecture
+    .adresse(ROMaddr),          //////////////////////////////////////    
+    .read_enable(clk_out),     // Signal pour démarrer une lecture
     .DataOUT(ROMdata),        // Données 32 bits en sortie
     .data_valid(),           // Indique que les données sont valides
     
@@ -97,5 +103,5 @@ module top(
     .spi_mosi(flash_mosi),
     .spi_miso(flash_miso),
     .spi_cs_n(flash_cs_n)
-);*/
+);
 endmodule

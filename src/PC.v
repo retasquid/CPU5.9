@@ -8,18 +8,21 @@ module PC(
     input wire [15:0] Imm,
     input wire [15:0] DoST
 );
+    initial
+    begin
+      ADDRout <= 16'd1024;
+    end
+
     always@(negedge CLK or posedge RST) begin
         if (RST) begin
-            ADDRout <= 16'b0;
+            ADDRout <= 16'd1024;
         end else begin
             if(PCpp) begin
                 ADDRout<=ADDRout+16'b1;
-            end else if(jmp || Ret) begin
-                if(Ret) begin
-                    ADDRout<=DoST;
-                end else if(jmp) begin
-                    ADDRout<=Imm;
-                end
+            end else if(Ret) begin
+                ADDRout<=DoST;
+            end else if(jmp) begin
+                ADDRout<=Imm;
             end
         end
     end
