@@ -73,7 +73,8 @@ module IO(
         .read(readUART),
         .tx(tx),                 // Ligne de transmission
         .DataIn(UARTIn),         // Données reçues
-        .busy(uart_busy)
+        .busy(uart_busy),
+        .clk_baud(clk_baud)
     );
     
     // Registres de statut
@@ -92,7 +93,7 @@ module IO(
             UARTOut <= 8'b00000000;
             sendSPI <= 1'b0;
             sendUART <= 1'b0;
-            baud <= 24'd9602;  // Valeur par défaut pour le baud rate (9600)
+            baud <= 24'd9600;  // Valeur par défaut pour le baud rate (9600)
         end else begin
             // Traitement des accès au bus
             if(CS)begin
