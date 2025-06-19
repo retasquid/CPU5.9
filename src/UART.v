@@ -1,19 +1,18 @@
 module UART(
     input wire[23:0] baud,       // Paramètre de baud rate
     input wire clk_xtal,         // Signal d'horloge 27MHz
-    input wire clk_CPU,         // Signal d'horloge 27MHz
+    input wire clk_CPU,         // Signal d'horloge
     input wire send,             // Signal pour démarrer la transmission
     input wire[7:0] DataOut,     // Données à transmettre
     input wire rx,               // Ligne de réception
     input wire read,
     output reg tx,               // Ligne de transmission
     output reg[7:0] DataIn,       // Données reçues
-    output wire busy,
-    output reg clk_baud
+    output reg busy
 );
     // Déclaration des registres
     reg[23:0] cnt;               // Compteur pour le diviseur de baud
-    //reg clk_baud;                // Horloge correspondant au baud rate
+    reg clk_baud;                // Horloge correspondant au baud rate
     reg transmitting, latch;            // État de transmission
     reg receiving;               // État de réception
     reg[9:0] tx_shift_reg;       // Registre à décalage pour TX
@@ -21,13 +20,13 @@ module UART(
     reg[3:0] tx_bit_count;       // Compteur de bits transmis
     reg[3:0] rx_bit_count;       // Compteur de bits reçus
     reg rx_d1, read_ready,read_ready_SET;            // Pour détecter le front descendant de rx
-    assign busy=transmitting;
     
     // Initialisation
     initial begin
         cnt = 24'b0;
         clk_baud = 1'b0;
         transmitting = 1'b0;
+        busy<=1'b0;
         latch = 1'b1;
         read_ready_SET <= 1'b0;
         read_ready = 1'b0;
@@ -54,6 +53,7 @@ module UART(
         if(send && !transmitting && latch) begin
             latch<=1'b0;
             transmitting <= 1'b1;
+            busy<=1'b1;
             tx_shift_reg <= {1'b1, DataOut, 1'b0}; // {stop bit, data, start bit}
             tx_bit_count <= 4'b0;
         end
@@ -65,6 +65,7 @@ module UART(
             end else begin
                 tx <= 1'b1; // Retour à l'état idle
                 transmitting <= 1'b0;
+                busy<=1'b0;
             end 
         end
     end
@@ -93,7 +94,7 @@ module UART(
             end
         end
     end
-    always @(negedge clk_CPU) begin
+    always @(posedge clk_CPU) begin
         if(read_ready && !receiving)begin
             DataIn<= rx_shift_reg[7:0];
         end else begin
@@ -102,7 +103,7 @@ module UART(
 	end
 	
     always @(posedge clk_baud) begin
-        if(read)begin
+        if(read && !receiving)begin
             read_ready<= 1'b0;
         end else if(read_ready_SET) begin
             read_ready<= 1'b1;

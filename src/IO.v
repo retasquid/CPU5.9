@@ -19,8 +19,7 @@ module IO(
     input wire clk_xtal,
     input wire clk_xtal27,
     output reg [15:0] confINT,
-    input wire rst,
-    output wire clk_baud
+    input wire rst
 );
     // Registres pour les interfaces SPI et UART
     reg [7:0] tx_spi, UARTOut;
@@ -73,8 +72,7 @@ module IO(
         .read(readUART),
         .tx(tx),                 // Ligne de transmission
         .DataIn(UARTIn),         // Données reçues
-        .busy(uart_busy),
-        .clk_baud(clk_baud)
+        .busy(uart_busy)
     );
     
     // Registres de statut

@@ -11,22 +11,7 @@ module Flash_Controler (
     output wire spi_mosi,
     input wire spi_miso,
     output reg spi_cs_n
-);
-
-    spi_master SPI(
-        .clk1(clk),
-        .clk2(clk),
-        .rst(rst),
-        .tx_data(spi_tx_data), // Données à transmettre
-        .rx_data(spi_rx_data),// Données reçues
-        .start_tx(spi_clk_en),
-        .busy(spi_busy),
-        .conf(confspi),
-        .spi_clk(spi_clk),
-        .spi_mosi(spi_mosi),
-        .spi_miso(spi_miso),
-        .spi_cs_n(use_less)
-    );
+);    
 
     // Commandes Flash MX25L3233F
     parameter CMD_READ    = 8'h03;  // Fast Read
@@ -57,17 +42,36 @@ module Flash_Controler (
     wire [7:0] spi_rx_data;
     reg [23:0] flash_addr;
     reg [31:0] data_buffer;
-    reg spi_clk_en;
+    reg spi_clk_en,clkout;
     reg read_req;
     reg read_req_prev;
     reg[7:0] confspi;
     wire spi_busy;
     wire use_less;
 
+    spi_master SPI(
+        .clk1(clkout),
+        .clk2(clkout),
+        .rst(rst),
+        .tx_data(spi_tx_data), // Données à transmettre
+        .rx_data(spi_rx_data),// Données reçues
+        .start_tx(spi_clk_en),
+        .busy(spi_busy),
+        .conf(confspi),
+        .spi_clk(spi_clk),
+        .spi_mosi(spi_mosi),
+        .spi_miso(spi_miso),
+        .spi_cs_n(use_less)
+    );
+    Gowin_CLKDIV clk_div5(
+        .clkout(clkout), //output clkout
+        .hclkin(clk), //input hclkin
+        .resetn(~rst) //input resetn
+    );
     assign busy = (state != STATE_IDLE);
     
     // Détection du front montant de read_enable
-    always @(posedge clk or posedge rst) begin
+    always @(posedge clkout or posedge rst) begin
         if (rst) begin
             read_req_prev <= 1'b0;
             read_req <= 1'b0;
@@ -78,7 +82,7 @@ module Flash_Controler (
     end
     
     // Machine à états principale - Mise à jour sur front montant de clk
-    always @(posedge clk or posedge rst) begin
+    always @(posedge clkout or posedge rst) begin
         if (rst) begin
             state <= STATE_IDLE;
             spi_cs_n <= 1'b1;
@@ -134,11 +138,11 @@ module Flash_Controler (
                 
                 STATE_ADDR_L: begin
                     spi_clk_en <= 1'b1;
-                    spi_tx_data <=8'hff; // Premier octet d'adresse
                 end
 
                 STATE_ADDR_L_SEND: begin
                     spi_clk_en <= 1'b0;
+                    spi_tx_data <=8'hff; // Premier octet d'adresse
                 end
                 
                 STATE_DATA_B3: begin // MSB
