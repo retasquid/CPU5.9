@@ -11,10 +11,10 @@
     input wire clk_bus,
     input wire rst_bus
 );
-    wire ENflags, SBalu, Wreg, INTjmp, jmp, PCpp, Ret, Call, outOR;
+    wire ENflags, ENcarry, SBalu, Wreg, INTjmp, jmp, PCpp, Ret, Call, outOR;
     wire[1:0] Sregin;
     wire[2:0] OPalu;
-    wire[3:0] FLAGS;
+    wire[5:0] FLAGS;
     wire[15:0] B, S, MUXREG, Dout_mux;
     wire[28:0] Inst,data;
     
@@ -36,6 +36,7 @@
         .B(Addr),
         .OPALU(OPalu),
         .enFLAGS(ENflags),
+        .enCARRY(ENcarry),
         .clk(clk_bus),
         .rst(rst_bus)
     );
@@ -71,10 +72,11 @@
         .Sregin(Sregin),
         .SBalu(SBalu),
         .ENflag(ENflags),
+        .ENcarry(ENcarry),
         .OPalu(OPalu),
         .Wbus(write),
         .OPCode(OPcode),
-        .A(R1[1:0]),
+        .A(R1[2:0]),
         .FLAG(FLAGS),
         .CLK(clk_bus),
         .Call(Call),

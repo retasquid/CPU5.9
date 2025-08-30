@@ -63,6 +63,7 @@ module Flash_Controler (
         .spi_miso(spi_miso),
         .spi_cs_n(use_less)
     );
+
     Gowin_CLKDIV clk_div5(
         .clkout(clkout), //output clkout
         .hclkin(clk), //input hclkin

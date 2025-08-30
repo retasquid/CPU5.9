@@ -7,9 +7,8 @@ module CLK_Div(
     OSC_CLK clkOSC(
         .oscout(clk_OSC) //output oscout
     );
-    
     always@(posedge clk_OSC) begin
-        if(cnt==25'd6553) begin //d32767999
+        if(cnt==25'd655) begin //d32767999
             cnt<=25'b0;
             clk_out<=~clk_out;
         end else begin

@@ -6,17 +6,18 @@ module UC(
     output wire [1:0] Sregin,
     output wire SBalu,
     output wire ENflag,
+    output wire ENcarry,
     output wire [2:0] OPalu,
     output wire Wbus,
     input wire [4:0] OPCode,
-    input wire [1:0] A,
-    input wire [3:0] FLAG,
+    input wire [2:0] A,
+    input wire [5:0] FLAG,
     input wire CLK,
     output wire Call,
     output wire Rbus
-
    );
-    reg [11:0] UCrom [0:24];
+
+    reg [11:0] UCrom [0:26];
     reg [11:0] temp;
     initial begin
         UCrom[0]  = 12'h000;  
@@ -44,6 +45,8 @@ module UC(
         UCrom[22] = 12'h801; 
         UCrom[23] = 12'h600; 
         UCrom[24] = 12'h9a0; 
+        UCrom[25] = 12'h910; 
+        UCrom[26] = 12'h912; 
     end
 
     always @(*) begin
@@ -60,4 +63,5 @@ module UC(
         assign PCpp= temp[11]&(~JMP);
         assign Call = (OPCode==5'b10110)?1'b1:1'b0;
         assign Rbus = (OPCode==5'b11000 || OPCode==5'b10111 || OPCode==5'b10011)?1'b1:1'b0;
+        assign ENcarry = (OPCode==5'b11001 || OPCode==5'b11010);
 endmodule
