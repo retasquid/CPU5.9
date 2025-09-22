@@ -37,31 +37,6 @@ module top(
                     CS3&(AddrRAM[13:8]==6'b000000) ? DoutRAM_ram3 : 
                     16'b0;
     
-    //wire flash_prog_clk, flash_prog_mosi, flash_prog_cs_n;
-    //wire flash_rom_clk, flash_rom_mosi, flash_rom_cs_n;
-
-    //assign flash_clk=PROG?flash_prog_clk:flash_rom_clk;
-    //assign flash_mosi=PROG?flash_prog_mosi:flash_rom_mosi;
-    //assign flash_cs_n=PROG?flash_prog_cs_n:flash_rom_cs_n;
-    
-    //wire io_tx, prog_tx;
-
-    //assign tx=PROG?prog_tx:io_tx;
-
-    /*Flash_Writer_UART Flash_prog(
-        .clk(clk_xtal),
-        .rst(rst),
-        
-        // Interface UART
-        .uart_rx(rx),
-        .uart_tx(prog_tx),
-        
-        // Interface Flash SPI
-        .spi_clk(flash_prog_clk),
-        .spi_mosi(flash_prog_mosi),
-        .spi_miso(flash_miso),
-        .spi_cs_n(flash_prog_cs_n)
-    );*/
 
     CLK_Div clk_source(
         .clk_out(clk_out),
@@ -131,7 +106,6 @@ module top(
         .write(write),
         .read(read),
         .clk(clk_out),
-        .clk_xtal(clk_OSC),
         .clk_xtal27(clk_xtal),
         .confINT(confINT),
         .rst(rst)
@@ -140,10 +114,10 @@ module top(
     Flash_Controler MX25L3233F(
     .adresse(ROMaddr),          //////////////////////////////////////    
     .read_enable(clk_out),     // Signal pour démarrer une lecture
-    .DataOUT(ROMdata),        // Données 32 bits en sortie
-    .data_valid(),           // Indique que les données sont valides
+    .DataOUT(ROMdata),    // Données 32 bits en sortie
+    .data_valid(),                // Indique que les données sont valides
     
-    .clk(clk_OSC),
+    .clkout(clk_OSC),
     .rst(rst),
     .busy(),
     .spi_clk(flash_clk),

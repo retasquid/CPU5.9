@@ -2,17 +2,16 @@ module CLK_Div(
     output reg clk_out,
     output wire clk_OSC
 );
-    reg[24:0] cnt;
+    reg[5:0] cnt;
+    wire OSCclk;
 
     OSC_CLK clkOSC(
-        .oscout(clk_OSC) //output oscout
+        .oscout(OSCclk) //output oscout
     );
-    always@(posedge clk_OSC) begin
-        if(cnt==25'd655) begin //d32767999
-            cnt<=25'b0;
-            clk_out<=~clk_out;
-        end else begin
-             cnt<=cnt+21'b1;
-        end
-    end
+
+    Gowin_rPLL PLL(
+        .clkout(clk_OSC), //output clkout
+        .clkoutd(clk_out), //output clkoutd
+        .clkin(OSCclk) //input clkin
+    );
 endmodule

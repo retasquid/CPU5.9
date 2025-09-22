@@ -16,7 +16,6 @@ module IO(
     input wire write,
     input wire read,
     input wire clk,
-    input wire clk_xtal,
     input wire clk_xtal27,
     output reg [15:0] confINT,
     input wire rst
