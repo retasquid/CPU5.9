@@ -2,6 +2,7 @@
 Implementation of a basic 16-bit CPU with UART, SPI, Interruptions(work in progress).
 
 It has been develloped for a tang nano 9k FPGA and use between 2500 and 3500 LUTs
+It has been tested on a zynq 7020 FPGA and use between 1000 and 1500 LUTs
 
 ## Specs
 The CPU5.9 is slower than others µcontrollers because of the SPI flash communication, an instruction commande is : Commande(1 byte) + Address(3 bytes) + data(4 bytes), the max speed of READ commande is 50MHz so the theoretical max speed is ~700 kHz. Other technologies (QSPI, parallel) can achieve better frequency. QSPI or 2READ is not yet implemented on the flash controller
